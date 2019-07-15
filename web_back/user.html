@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="css/iconfont.css">
     <link rel="stylesheet" href="css/main.css">
     <script src="js/jquery-1.12.4.min.js"></script>
+    <!-- 导入bootstrap的js文件 -->
+    <script src="./js/bootstrap/js/bootstrap.min.js"></script>
+
 
 </head>
 
@@ -24,81 +27,150 @@
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">用户名称：</label>
                     <div class="col-sm-4">
-                        <input type="text" class="form-control" id="inputEmail3" value="李思思">
+                        <input type="text" name="username" class="form-control" id="inputEmail3" value="李思思">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">昵称：</label>
                     <div class="col-sm-4">
-                        <input type="text" class="form-control" id="inputEmail3" value="思思">
+                        <input type="text" name="nickname" class="form-control" id="inputEmail3" value="思思">
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="inputEmail3" class="col-sm-2 control-label">邮箱：</label>
                     <div class="col-sm-4">
-                        <input type="text" class="form-control" id="inputEmail3" value="lisisi@126.com">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
-                    <div class="col-sm-10">
-                        <img src="images/2.jpg" alt="" class="user_pic">
-                        <input type="file" id="exampleInputFile">
+                        <input type="text" name="email" class="form-control" id="inputEmail3" value="lisisi@126.com">
                     </div>
                 </div>
 
                 <div class="form-group">
-                        <label for="inputEmail3" class="col-sm-2 control-label">密码：</label>
-                        <div class="col-sm-4">
-                            <input type="password" class="form-control" id="inputEmail3" value="12345678">
-                        </div>
+                    <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
+                    <div class="col-sm-10">
+                        <img src="images/2.jpg" alt="" class="user_pic">
+                        <input type="file" name="user_pic" id="exampleInputFile">
                     </div>
-               
-    
+                </div>
+
+                <div class="form-group">
+                    <label for="inputEmail3" class="col-sm-2 control-label">密码：</label>
+                    <div class="col-sm-4">
+                        <input type="password" name="password" class="form-control" id="inputEmail3" value="12345678">
+                    </div>
+                </div>
+
+
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-10">
-                        <button type="submit" class="btn btn-success">修改</button>
+                        <button type="submit" class="btn btn-success btn-edit">修改</button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">温馨提示</h4>
+                </div>
+                <div class="modal-body">
+                    修改成功!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         // 1.用户头像预览（固定代码）
-        $(function (){
+        $(function () {
             // 1.1 给图片选择按钮添加一个change事件
-            $('#exampleInputFile').on('change',function(){
+            $('#exampleInputFile').on('change', function () {
                 //1.2 获取选中的图片
                 var iconFile = this.files[0];
                 // 1.3 调用获取图片临时路径方法，获取url
                 var url = URL.createObjectURL(iconFile);
-                $('.user_pic').attr('src',url);
+                $('.user_pic').attr('src', url);
+            });
+
+            // 2.进入页面，获取个人信息，显示在页面对应的标签上
+            // 2.1 发送ajax请求
+            $.ajax({
+                url: 'http://localhost:8000/admin/userinfo_get',
+                success: function (res) {
+                    if (res.code == 200) {
+                        // 2.2 把对应的信息显示在对应的标签中
+                        // $('.username').val(res.data.username);
+                        // $('.nickname').val(res.data.nickname);
+                        // $('.email').val(res.data.email);
+                        // $('.password').val(res.data.password);
+
+                        // 2.3 因为上面代码格式一样，所以我们可以用for in 方法来做
+                        for (var cjj in res.data) {
+                            $('.' + cjj).val(res.data[cjj]);
+                        }
+                        $('.user_pic').attr('src', res.data.user_pic);
+                    }
+                }
+            });
+
+            // 3. 保存修改用户信息
+            // 3.1 修改按钮设置点击事件 注意：要阻止默认跳转
+            $('.btn-edit').on('click', function (e) {
+                // 3.2 阻止默认跳转
+                e.preventDefault();
+                // 3.3 创建formData对象 注意：使用formData要保证表单标签在获取值的时候里有name属性
+                var formData = new FormData($('.article_form')[0]);
+                console.log(formData.get('username'));
+                
+                // 3.4 发送ajax请求
+                $.post({
+                    url: 'http://localhost:8000/admin/userinfo_edit',
+                    data: formData,
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        console.log(res);
+                        if (res.code == 200) {
+                            // 3.5 修改成功弹出模态框
+                            $('#myModal').modal();
+                            // 3.6 给确认按钮设置一个点击事件
+                            $('.btn-primary').on('click', function () {
+                                // 3.7 再次发送ajax请求，获取登录用户信息，显示在页面对应的标签中
+                                $.get({
+                                    url: 'http://localhost:8000/admin/getuser',
+                                    success: function (res) {
+                                        console.log(res);
+                                        
+                                        if (res.code == 200) {
+                                            // 3.8 判断成功把对应的数据显示在也对应标签中
+                                            // 注意：这里我们需要用到jQuery在iframe子页面获取父页面元素的方法代码：
+                                            // parent.$('需要获取的元素名');
+                                            // parent.method();
+                                            parent.$('.user_info').children('span').html('欢迎&nbsp;&nbsp;' + res.data.nickname);
+                                            parent.$('.user_info').children('img').attr('src' , res.data.user_pic);
+                                            parent.$('.user_center_link').children('img').attr('src' , res.data.user_pic);
+                                        }
+                                    }
+
+                                })
+                                // 4. 隐藏模态框
+                                $('#myModal').modal('hide');
+                            });
+                        }
+                    }
+                })
             });
         })
 
-        // 2.进入页面，获取个人信息，显示在页面对应的标签上
-        // 2.1 发送ajax请求
-        $.ajax({
-            url:'http://localhost:8000/admin/userinfo_get',
-            success:function(res){
-                if( res.code == 200 ){
-                    // 2.2 把对应的信息显示在对应的标签中
-                    // $('.username').val(res.data.username);
-                    // $('.nickname').val(res.data.nickname);
-                    // $('.email').val(res.data.email);
-                    // $('.password').val(res.data.password);
 
-                    // 2.3 因为上面代码格式一样，所以我们可以用for in 方法来做
-                    for (var cjj in res.data){
-                        $('.'+key).val(res.data[cjj]);
-                    }
-                    $('.user_pic').attr('src',res.data.user_pic);
-                }
-            }
-        })
     </script>
 </body>
 
