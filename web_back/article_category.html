@@ -140,7 +140,7 @@
                 <td>{{$value.slug}}</td>
                 <td class="text-center">
                     <a href="#" class="btn btn-info btn-xs">编辑</a>
-                    <a href="javascript:deleteTr( {{$value.id}} );" class="btn btn-danger btn-xs">删除</a>
+                    <a href="javascript:" data-id="{{$value.id}}" class="btn btn-danger btn-xs btn-delete">删除</a>
                 </td>
             </tr>
         {{/each}}
@@ -189,14 +189,46 @@
                             console.log(res);
                             
                             if(res.code == 200){
-                                // 2.4 直接操作DOM树，给它添加一个tr
+                                // 2.4 调用getData（）函数，重新获取一次
                                 getData();
+                                // 2.5 把数据渲染到模板上
                                 var resHtml2 = template('tpl', res);
+                                // 2.6 把渲染好的数据显示在tbody里
                                 $('tbody').html(resHtml2);
                             }
                         }
-                    })
+                    });
                     $('#addModal').modal('hide');
+                });
+                // 3. 删除文章分类
+                //    3.1 因为删除按钮是动态生成，所以给按钮添加事件时要使用事件委托
+                //        事件委托制定a标签触发，但是重复太多，所以我们自己去模板给它重新添加一个类:btn-delete
+                //        因为a标签默认自带点击事件，所以我们把它自带的点击事件删除，但是同时删除了id，
+                //        所以我们给它自定义一个属性data-id来保存这一行的文章类别id
+                $('tbody').on('click', '.btn-delete',function(e){
+                    // 3.7 因为请求里面的this指向不同，所以把当前的this用that保存一下
+                    var that = $(this);
+
+                    // 3.2 阻止默认跳转
+                    e.preventDefault();
+                    // 3.3 点击删除可能是误操作，所以点击时确认一下
+                    if(confirm('你确定删除吗？')){
+                        // 3.4 获取当前删除的是哪个文章类别的id
+                        var cataId = $(this).attr('data-id');
+                        // 3.5 发送ajax请求
+                        $.post({
+                            url: 'http://localhost:8000/admin/category_delete',
+                            data:{
+                                id: cataId,
+                            },
+                            success: function (res){
+                                // 3.6 判断成功执行if里面的代码，完成删除操作
+                                if(res.code == 200){
+                                    that.parents('tr').remove();
+                                }
+                            }
+                        })
+                    }
                 })
             })
     </script>
